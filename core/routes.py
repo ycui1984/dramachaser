@@ -29,9 +29,10 @@ def update_drama(user_id, drama_id, op):
             pipe.multi()
             if op == DRAMAOP.CHASE:
                 pipe.sadd(user_id, drama_id)
-                pipe.sadd(scheduler.get_users_key(), user_id)
+                pipe.sadd(scheduler.get_all_users_key(), user_id)
             else:
                 pipe.srem(user_id, drama_id)
+                pipe.srem(scheduler.get_all_users_key(), user_id)
             pipe.execute()
             break
         except redis.WatchError:
@@ -41,17 +42,20 @@ def update_drama(user_id, drama_id, op):
     
 @app.route('/')
 @app.route('/index')
-# TODO: show the drama that already added
 def index():
-    return "Welcome to drama chaser"
+    all_users = scheduler.get_all_users()
+    user_to_dramas = [{'user_id': u, 'drama_ids': list(scheduler.get_drama_ids(u))} for u in all_users]
+    return {'response': user_to_dramas}
+
 
 @app.route('/drama/chase', methods=['POST'])
 def chase():
     user_id, drama_id = get_user_id(request), get_drama_id(request)
     update_drama(user_id, drama_id, DRAMAOP.CHASE)
-
-
+    return {'user_id' : user_id, 'drama_id' : drama_id, 'action': 'chase'}
+    
 @app.route('/drama/abandon', methods=['POST'])
 def abandon():
     user_id, drama_id = get_user_id(request), get_drama_id(request)
     update_drama(user_id, drama_id, DRAMAOP.ABANDON)
+    return {'user_id' : user_id, 'drama_id': drama_id, 'action': 'abandon'}

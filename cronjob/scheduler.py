@@ -60,7 +60,7 @@ def get_drama_report(vod, drama_id):
         driver.close()
 
 def get_drama_ids(user_id):
-    return redis.Redis(host='localhost', port=6379, db=0).get(user_id)
+    return redis.Redis(host='localhost', port=6379, db=0).smembers(user_id)
 
 def get_all_drama_reports(vod, user_id):
     drama_ids = get_drama_ids(user_id)
@@ -69,7 +69,7 @@ def get_all_drama_reports(vod, user_id):
     return []
 
 def get_all_users():
-    return redis.Redis(host='localhost', port=6379, db=0).get(get_all_users_key())
+    return redis.Redis(host='localhost', port=6379, db=0).smembers(get_all_users_key())
 
 def send_email(reports):
     meaningful_reports = filter(lambda x: x is not None, reports)
@@ -84,7 +84,7 @@ def send_email(reports):
     except Exception as e:
         logging.error(e)
         return
-        
+
     msg = '\n'.join(meaningful_reports)
     logging.info('sending {} to notify users'.format(msg))
     try:
