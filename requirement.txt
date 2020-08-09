@@ -1,0 +1,6 @@
+redis==3.5.3
+selenium==3.141.0
+flask==1.1.2
+python-dotenv==0.14.0
+python-crontab==2.5.1
+enum34==1.1.10
