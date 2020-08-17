@@ -1,2 +1,4 @@
+logs/
+app.db
 venv/
 *.pyc
