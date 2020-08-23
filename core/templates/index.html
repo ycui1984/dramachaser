@@ -16,5 +16,22 @@
             {{ wtf.quick_form(form) }}
         </div>
     </div>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Drama ID</th>
+                <th>Drama Name</th>
+            <tr>
+        </thead>
+        <tbody>
+            {% for drama_id in drama_ids %}
+            <tr>
+                <td>{{ drama_id }}</td>
+                <td>Placeholder</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 {% endblock %}

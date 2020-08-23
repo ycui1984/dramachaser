@@ -48,6 +48,13 @@ def update_drama(user_id, drama_id, op):
         finally:
             pipe.reset()
     
+def chase(user_id, drama_id):
+    update_drama(user_id, drama_id, DRAMAOP.CHASE)
+    return {'user_id' : user_id, 'drama_id' : drama_id, 'action': 'chase'}
+    
+def abandon(user_id, drama_id):
+    update_drama(user_id, drama_id, DRAMAOP.ABANDON)
+    return {'user_id' : user_id, 'drama_id': drama_id, 'action': 'abandon'}
 
 @app.before_request
 def before_request():
@@ -56,30 +63,19 @@ def before_request():
         db.session.commit()
 
 
-@app.route('/')
-@app.route('/index')
+@app.route('/', methods=['POST', 'GET'])
+@app.route('/index', methods=['POST', 'GET'])
 @login_required
 def index():
     form = DramaChasingForm()
-    drama_ids = list(scheduler.get_drama_ids(current_user.username))
+    user_id = current_user.username
+    if form.validate_on_submit():
+        drama_id = form.drama_id.data
+        drama_name = form.drama_name.data
+        chase(user_id, drama_id)
+        flash('Start to chase drama {}'.format(drama_name))
+    drama_ids = list(scheduler.get_drama_ids(user_id))
     return render_template('index.html', title='Home', drama_ids=drama_ids, form=form)
-
-@app.route('/drama/chase', methods=['POST'])
-@login_required
-def chase():
-    drama_id = get_drama_id(request)
-    update_drama(current_user.username, drama_id, DRAMAOP.CHASE)
-    print(current_user.username)
-    print(drama_id)
-    return {'user_id' : current_user.username, 'drama_id' : drama_id, 'action': 'chase'}
-    
-@app.route('/drama/abandon', methods=['POST'])
-@login_required
-def abandon():
-    drama_id = get_drama_id(request)
-    update_drama(current_user.username, drama_id, DRAMAOP.ABANDON)
-    return {'user_id' : current_user.username, 'drama_id': drama_id, 'action': 'abandon'}
-
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
