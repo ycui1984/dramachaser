@@ -3,6 +3,11 @@ from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextA
 from wtforms.validators import ValidationError, DataRequired, Email, EqualTo, Length
 from core.models import User
 
+class DramaChasingForm(FlaskForm):
+    drama_id = StringField('Drama ID', validators=[DataRequired()])
+    drama_name = StringField('Drama Name', validators=[DataRequired()])
+    submit = SubmitField('Chase')
+
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])

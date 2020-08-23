@@ -8,7 +8,7 @@ from flask import render_template, flash, redirect, url_for, request
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
 from core import app, db
-from core.forms import LoginForm, RegistrationForm, EditProfileForm, ResetPasswordRequestForm, ResetPasswordForm
+from core.forms import DramaChasingForm,LoginForm, RegistrationForm, EditProfileForm, ResetPasswordRequestForm, ResetPasswordForm
 from core.models import User
 from core.email import send_password_reset_email
 
@@ -60,33 +60,25 @@ def before_request():
 @app.route('/index')
 @login_required
 def index():
-    posts = [
-        {
-            'author': {'username': 'John'},
-            'body': 'Beautiful day in Portland!'
-        },
-        {
-            'author': {'username': 'Susan'},
-            'body': 'The Avengers movie was so cool!'
-        }
-    ]
-    return render_template('index.html', title='Home', posts=posts)
-    # all_users = scheduler.get_all_users()
-    # user_to_dramas = [{'user_id': u, 'drama_ids': list(scheduler.get_drama_ids(u))} for u in all_users]
-    # return {'response': user_to_dramas}
-
+    form = DramaChasingForm()
+    drama_ids = list(scheduler.get_drama_ids(current_user.username))
+    return render_template('index.html', title='Home', drama_ids=drama_ids, form=form)
 
 @app.route('/drama/chase', methods=['POST'])
+@login_required
 def chase():
-    user_id, drama_id = get_user_id(request), get_drama_id(request)
-    update_drama(user_id, drama_id, DRAMAOP.CHASE)
-    return {'user_id' : user_id, 'drama_id' : drama_id, 'action': 'chase'}
+    drama_id = get_drama_id(request)
+    update_drama(current_user.username, drama_id, DRAMAOP.CHASE)
+    print(current_user.username)
+    print(drama_id)
+    return {'user_id' : current_user.username, 'drama_id' : drama_id, 'action': 'chase'}
     
 @app.route('/drama/abandon', methods=['POST'])
+@login_required
 def abandon():
-    user_id, drama_id = get_user_id(request), get_drama_id(request)
-    update_drama(user_id, drama_id, DRAMAOP.ABANDON)
-    return {'user_id' : user_id, 'drama_id': drama_id, 'action': 'abandon'}
+    drama_id = get_drama_id(request)
+    update_drama(current_user.username, drama_id, DRAMAOP.ABANDON)
+    return {'user_id' : current_user.username, 'drama_id': drama_id, 'action': 'abandon'}
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -129,11 +121,7 @@ def register():
 @login_required
 def user(username):
     user = User.query.filter_by(username=username).first_or_404()
-    posts = [
-        {'author': user, 'body': 'Test post #1'},
-        {'author': user, 'body': 'Test post #2'}
-    ]
-    return render_template('user.html', user=user, posts=posts)
+    return render_template('user.html', user=user)
 
 
 @app.route('/edit_profile', methods=['GET', 'POST'])

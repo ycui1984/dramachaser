@@ -2,4 +2,19 @@
 {% import 'bootstrap/wtf.html' as wtf %}
 
 {% block app_content %}
+<div>
+    <!-- <style>
+        .img-container {
+            text-align: center;
+        }
+    </style>
+    <div class = "img-container">
+        <img src="/static/images/dance.png" alt="dance" style="width:60%"> 
+    </div> -->
+    <div class="row">
+        <div class="col-md-4">
+            {{ wtf.quick_form(form) }}
+        </div>
+    </div>
+</div>
 {% endblock %}
