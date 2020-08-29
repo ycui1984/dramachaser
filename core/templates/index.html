@@ -22,13 +22,15 @@
             <tr>
                 <th>Drama ID</th>
                 <th>Drama Name</th>
+                <th>Show List</th>
             <tr>
         </thead>
         <tbody>
-            {% for drama_id in drama_ids %}
+            {% for drama_id, content in ugc_content.items() %}
             <tr>
                 <td>{{ drama_id }}</td>
-                <td>Placeholder</td>
+                <td>{{ content.drama_name }}</td>
+                <td>{{ content.show_list }}</td>
             </tr>
             {% endfor %}
         </tbody>
