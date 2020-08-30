@@ -71,6 +71,14 @@ def before_request():
         current_user.last_seen = datetime.utcnow()
         db.session.commit()
 
+@app.route('/drama/abandon', methods=['DELETE'])
+@login_required
+def anandon_drama():
+    user_id = current_user.username
+    drama_id = request.form['drama_id']
+    abandon(user_id, drama_id)
+    return {'status': 'OK'}
+
 @app.route('/', methods=['POST', 'GET'])
 @app.route('/index', methods=['POST', 'GET'])
 @login_required
@@ -82,6 +90,7 @@ def index():
         drama_name = form.drama_name.data
         chase(user_id, drama_id, drama_name)
         flash('Start to chase drama {}'.format(drama_name))
+        return redirect(url_for('index'))
     drama_ids = list(scheduler.get_drama_ids(user_id))
     ugc_content = {}
     for drama_id in drama_ids:

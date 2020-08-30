@@ -17,12 +17,13 @@
         </div>
     </div>
 
-    <table class="table table-striped">
+    <table class="table table-striped" id="drama_table">
         <thead>
             <tr>
                 <th>Drama ID</th>
                 <th>Drama Name</th>
                 <th>Show List</th>
+                <th>Operation</th>
             <tr>
         </thead>
         <tbody>
@@ -31,9 +32,30 @@
                 <td>{{ drama_id }}</td>
                 <td>{{ content.drama_name }}</td>
                 <td>{{ content.show_list }}</td>
+                <td><button type="submit" class="btn abandonButton">Abandon</button></td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#drama_table').on('click', '.abandonButton', function(events){
+            var drama_id = $(this).closest('tr').find('td').eq(0).html(); 
+            $(this).closest('tr').remove();
+            $.ajax({
+                url: '/drama/abandon',
+                type: 'DELETE',
+                data: {'drama_id' : drama_id},
+                success: function(response) {
+                    console.log(response);
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}
