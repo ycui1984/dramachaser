@@ -5,7 +5,6 @@ from core.models import User
 
 class DramaChasingForm(FlaskForm):
     drama_id = StringField('Drama ID', validators=[DataRequired()])
-    drama_name = StringField('Drama Name', validators=[DataRequired()])
     submit = SubmitField('Chase')
 
 class LoginForm(FlaskForm):

@@ -10,6 +10,7 @@ import pickle
 from core import app, mail
 from core.email import send_email
 from flask import render_template
+import requests
 
 class VOD(Enum):
     IFVOD = 1
@@ -29,6 +30,15 @@ def parse_ifvod_page(page):
     except Exception as ex:
         logging.error(ex)
 
+def parse_metadata_page(page):
+    match_obj = re.search('<meta.*?name="title".*?content="(.*?) - IFVOD".*?/>', page)
+    return match_obj.group(1)
+
+def parse_drama_name(drama_id):
+    url = get_drama_url(VOD.IFVOD, drama_id)
+    page = requests.get(url)
+    return parse_metadata_page(page.text)
+
 def get_user_generated_content_key(user_id, drama_id):
     return '{}:{}'.format(user_id, drama_id)
 
@@ -45,9 +55,7 @@ def get_drama_obj(drama_id):
 
 # key => drama_id
 # value => dict {
-#   last_updated_time
-#   current_show_list 
-#   delta_show_list 
+#   last_updated_time:<last_updated_time>, current_show_list:<current_show_list>, delta_show_list:<delta_show_list>
 # }
 def get_drama_updates(vod, drama_id):
     r = redis.Redis(host='localhost', port=6379, db=0)

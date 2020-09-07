@@ -12,6 +12,7 @@ from core.forms import DramaChasingForm,LoginForm, RegistrationForm, EditProfile
 from core.models import User
 from core.email import send_password_reset_email
 import pickle
+import logging
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -59,7 +60,7 @@ def before_request():
 @app.route('/drama/abandon', methods=['DELETE'])
 @login_required
 def anandon_drama():
-    user_id = current_user.username
+    user_id = current_user.email
     drama_id = request.form['drama_id']
     abandon(user_id, drama_id)
     return {'status': 'OK'}
@@ -72,7 +73,11 @@ def index():
     user_id = current_user.email
     if form.validate_on_submit():
         drama_id = form.drama_id.data
-        drama_name = form.drama_name.data
+        try:
+            drama_name = scheduler.parse_drama_name(drama_id)
+        except:
+            flash('Invalid drama id {}'.format(drama_id))
+            return redirect(url_for('index'))
         chase(user_id, drama_id, drama_name)
         flash('Start to chase drama {}'.format(drama_name))
         return redirect(url_for('index'))
