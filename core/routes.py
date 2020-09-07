@@ -3,7 +3,7 @@ from core import app
 import redis
 from flask import request
 from enum import Enum
-import scheduler
+import chaser
 from flask import render_template, flash, redirect, url_for, request
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
@@ -17,37 +17,6 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-class DRAMAOP(Enum):
-    CHASE = 1
-    ABANDON = 2
-    
-def update_drama(user_id, op, drama_id, serialized_payload = None):
-    r = redis.Redis(host='localhost', port=6379, db=0)
-    pipe = r.pipeline()
-    while True:
-        try:
-            pipe.watch(user_id)
-            pipe.multi()
-            if op == DRAMAOP.CHASE:
-                pipe.sadd(user_id, drama_id) # user to drama mapping
-                pipe.sadd(scheduler.get_all_users_key(), user_id) # all users mapping
-            else:
-                pipe.srem(user_id, drama_id)
-                pipe.srem(scheduler.get_all_users_key(), user_id)
-            pipe.execute()
-            break
-        except redis.WatchError:
-            continue
-        finally:
-            pipe.reset()
-    
-def chase(user_id, drama_id, drama_name):
-    payload = {'drama_name' : drama_name}
-    update_drama(user_id, DRAMAOP.CHASE, drama_id, pickle.dumps(payload))
-    
-def abandon(user_id, drama_id):
-    update_drama(user_id, DRAMAOP.ABANDON, drama_id)
-
 @app.before_request
 def before_request():
     if current_user.is_authenticated:
@@ -59,7 +28,8 @@ def before_request():
 def anandon_drama():
     user_id = current_user.email
     drama_id = request.form['drama_id']
-    abandon(user_id, drama_id)
+    drama_chaser = chaser.DramaChaser()
+    drama_chaser.abandon(user_id, drama_id)
     return {'status': 'OK'}
 
 @app.route('/', methods=['POST', 'GET'])
@@ -68,24 +38,18 @@ def anandon_drama():
 def index():
     form = DramaChasingForm()
     user_id = current_user.email
+    drama_chaser = chaser.DramaChaser()
     if form.validate_on_submit():
         drama_id = form.drama_id.data
         try:
-            drama_name = scheduler.load_drama_name(drama_id)
+            drama_name = drama_chaser.load_drama_name(drama_id)
         except:
             flash('Invalid drama id {}'.format(drama_id))
             return redirect(url_for('index'))
-        chase(user_id, drama_id, drama_name)
+        drama_chaser.chase(user_id, drama_id, drama_name)
         flash('Start to chase drama {}'.format(drama_name))
         return redirect(url_for('index'))
-    drama_ids = list(scheduler.get_drama_ids(user_id))
-    drama_metadata = {}
-    for drama_id in drama_ids:
-        payload = {}
-        drama_obj = scheduler.get_drama_obj(drama_id)
-        payload['show_list'] = None if drama_obj is None else drama_obj['current_show_list']
-        payload['drama_name'] = scheduler.load_drama_name(drama_id)
-        drama_metadata[drama_id] = payload
+    drama_metadata = drama_chaser.get_drama_metadata(user_id)
     return render_template('index.html', title='Home', drama_metadata=drama_metadata, form=form)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -129,7 +93,6 @@ def register():
 def user(username):
     user = User.query.filter_by(username=username).first_or_404()
     return render_template('user.html', user=user)
-
 
 @app.route('/edit_profile', methods=['GET', 'POST'])
 @login_required
@@ -177,4 +140,3 @@ def reset_password(token):
         flash('Your password has been reset.')
         return redirect(url_for('login'))
     return render_template('reset_password.html', form=form)
-
