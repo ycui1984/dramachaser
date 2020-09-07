@@ -3,7 +3,7 @@ from core import app
 import redis
 from flask import request
 from enum import Enum
-from cronjob import scheduler
+import scheduler
 from flask import render_template, flash, redirect, url_for, request
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
@@ -23,18 +23,15 @@ class DRAMAOP(Enum):
 def update_drama(user_id, op, drama_id, serialized_payload = None):
     r = redis.Redis(host='localhost', port=6379, db=0)
     pipe = r.pipeline()
-    ugc_key = get_user_generated_content_key(user_id, drama_id)
+    ugc_key = scheduler.get_user_generated_content_key(user_id, drama_id)
     while True:
         try:
             pipe.watch(user_id)
             pipe.multi()
             if op == DRAMAOP.CHASE:
-                # user to drama mapping
-                pipe.sadd(user_id, drama_id)
-                # user, drama to content mapping
-                pipe.set(ugc_key, serialized_payload)
-                # all users mapping
-                pipe.sadd(scheduler.get_all_users_key(), user_id)
+                pipe.sadd(user_id, drama_id) # user to drama mapping
+                pipe.set(ugc_key, serialized_payload) # user, drama to content mapping
+                pipe.sadd(scheduler.get_all_users_key(), user_id) # all users mapping
             else:
                 pipe.srem(user_id, drama_id)
                 pipe.delete(ugc_key)
@@ -52,18 +49,6 @@ def chase(user_id, drama_id, drama_name):
     
 def abandon(user_id, drama_id):
     update_drama(user_id, DRAMAOP.ABANDON, drama_id)
-
-def get_user_generated_content_key(user_id, drama_id):
-    return '{}:{}'.format(user_id, drama_id)
-
-def get_user_generated_content(user_id, drama_id):
-    r = redis.Redis(host='localhost', port=6379, db=0)
-    ugc_key = get_user_generated_content_key(user_id, drama_id)
-    return pickle.loads(r.get(ugc_key))
-
-def get_showlist(drama_id):
-    r = redis.Redis(host='localhost', port=6379, db=0)
-    return r.get(drama_id)
 
 @app.before_request
 def before_request():
@@ -84,7 +69,7 @@ def anandon_drama():
 @login_required
 def index():
     form = DramaChasingForm()
-    user_id = current_user.username
+    user_id = current_user.email
     if form.validate_on_submit():
         drama_id = form.drama_id.data
         drama_name = form.drama_name.data
@@ -94,9 +79,9 @@ def index():
     drama_ids = list(scheduler.get_drama_ids(user_id))
     ugc_content = {}
     for drama_id in drama_ids:
-        payload = get_user_generated_content(user_id, drama_id)
-        show_list = get_showlist(drama_id)
-        payload['show_list'] = show_list
+        payload = scheduler.get_user_generated_content(user_id, drama_id)
+        drama_obj = scheduler.get_drama_obj(drama_id)
+        payload['show_list'] = None if drama_obj is None else drama_obj['current_show_list']
         ugc_content[drama_id] = payload
     return render_template('index.html', title='Home', ugc_content=ugc_content, form=form)
 

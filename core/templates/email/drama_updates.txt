@@ -1,0 +1,10 @@
+Dear DramaChaser users,
+
+The dramas you chased have new updates!
+{% for drama, showlist in reports.items() %}
+Drama {{ drama }}: {{ showlist }}
+{% endfor %}
+
+Sincerely,
+
+The DramaChaser Team
