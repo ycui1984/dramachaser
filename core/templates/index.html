@@ -12,7 +12,6 @@
     <table class="table table-striped" id="drama_table">
         <thead>
             <tr>
-                <th>Drama ID</th>
                 <th>Drama Name</th>
                 <th>Show List</th>
                 <th>Operation</th>
@@ -21,9 +20,12 @@
         <tbody>
             {% for drama_id, metadata in drama_metadata.items() %}
             <tr>
-                <td>{{ drama_id }}</td>
-                <td>{{ metadata.drama_name }}</td>
-                <td>{{ metadata.show_list }}</td>
+                <td><a href='{{ drama_id }}'>{{ metadata.drama_name }}</a></td>
+                <td>
+                    {% for show in metadata.show_list %}
+                    <a href='{{ show }}'>Play</a> 
+                    {% endfor %}
+                </td>
                 <td><button type="submit" class="btn abandonButton">Abandon</button></td>
             </tr>
             {% endfor %}

@@ -52,6 +52,10 @@ class DramaChaser:
         return "https://www.ifvod.tv/detail?id={}".format(drama_id)
 
     @staticmethod
+    def __get_play_url(play_id):
+        return "https://www.ifvod.tv/play?id={}".format(play_id) 
+
+    @staticmethod
     def __parse_ifvod_page(page):
         try:
             match_obj = re.search('<app-media-list.*?>(.*?)</app-media-list>', page)
@@ -170,6 +174,16 @@ class DramaChaser:
             reports = self.__get_all_drama_reports(user)
             self.__notify_user_by_email(user, reports)
 
+    @staticmethod
+    def __transform_showlist_to_urls(show_list):
+        if show_list is None:
+            return None
+        return [DramaChaser.__get_play_url(show) for show in show_list]
+
+    @staticmethod
+    def __get_show_list(drama_obj):
+        return None if drama_obj is None else drama_obj['current_show_list']
+
     # get all drama metadata for a user
     def get_drama_metadata(self, user_id):
         drama_ids = list(self.__get_drama_ids(user_id))
@@ -177,9 +191,9 @@ class DramaChaser:
         for drama_id in drama_ids:
             payload = {}
             drama_obj = self.__get_drama_obj(drama_id)
-            payload['show_list'] = None if drama_obj is None else drama_obj['current_show_list']
+            payload['show_list'] = DramaChaser.__transform_showlist_to_urls(DramaChaser.__get_show_list(drama_obj))
             payload['drama_name'] = self.load_drama_name(drama_id)
-            drama_metadata[drama_id] = payload
+            drama_metadata[self.__get_drama_url(drama_id)] = payload
         return drama_metadata
     
 if __name__ == '__main__':
