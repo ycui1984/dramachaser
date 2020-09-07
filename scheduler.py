@@ -34,19 +34,22 @@ def parse_metadata_page(page):
     match_obj = re.search('<meta.*?name="title".*?content="(.*?) - IFVOD".*?/>', page)
     return match_obj.group(1)
 
-def parse_drama_name(drama_id):
+def get_metadata_key(drama_id):
+    return "{}:metadata".format(drama_id)
+
+def load_drama_name(drama_id):
+    metadata_key = get_metadata_key(drama_id)
+    r = redis.Redis(host='localhost', port=6379, db=0)
+    response = r.get(metadata_key)
+    if response is not None:
+        return pickle.loads(response)['drama_name']
     url = get_drama_url(VOD.IFVOD, drama_id)
     page = requests.get(url)
-    return parse_metadata_page(page.text)
-
-def get_user_generated_content_key(user_id, drama_id):
-    return '{}:{}'.format(user_id, drama_id)
-
-def get_user_generated_content(user_id, drama_id):
-    r = redis.Redis(host='localhost', port=6379, db=0)
-    ugc_key = get_user_generated_content_key(user_id, drama_id)
-    ugc_value = r.get(ugc_key)
-    return None if ugc_value is None else pickle.loads(r.get(ugc_key))
+    drama_name = parse_metadata_page(page.text)
+    payload = {}
+    payload['drama_name'] = drama_name
+    r.set(metadata_key, pickle.dumps(payload))
+    return drama_name
 
 def get_drama_obj(drama_id):
     r = redis.Redis(host='localhost', port=6379, db=0)

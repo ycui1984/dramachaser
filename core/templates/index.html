@@ -3,14 +3,6 @@
 
 {% block app_content %}
 <div>
-    <!-- <style>
-        .img-container {
-            text-align: center;
-        }
-    </style>
-    <div class = "img-container">
-        <img src="/static/images/dance.png" alt="dance" style="width:60%"> 
-    </div> -->
     <div class="row">
         <div class="col-md-4">
             {{ wtf.quick_form(form) }}
@@ -27,11 +19,11 @@
             <tr>
         </thead>
         <tbody>
-            {% for drama_id, content in ugc_content.items() %}
+            {% for drama_id, metadata in drama_metadata.items() %}
             <tr>
                 <td>{{ drama_id }}</td>
-                <td>{{ content.drama_name }}</td>
-                <td>{{ content.show_list }}</td>
+                <td>{{ metadata.drama_name }}</td>
+                <td>{{ metadata.show_list }}</td>
                 <td><button type="submit" class="btn abandonButton">Abandon</button></td>
             </tr>
             {% endfor %}
