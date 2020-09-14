@@ -2,7 +2,7 @@ Dear DramaChaser users,
 
 The dramas you chased have new updates!
 {% for drama, showlist in reports.items() %}
-Drama {{ drama }}: {{ showlist }}
+Drama {{ drama }}, {% for show in showlist %} {{ show[1] }} {% endfor %}
 {% endfor %}
 
 Sincerely,

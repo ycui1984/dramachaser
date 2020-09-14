@@ -2,7 +2,7 @@
 
 <p>The dramas you chased have new updates!</p>
 {% for drama, showlist in reports.items() %}
-<p> Drama {{ drama }}: {{ showlist }} </p>
+<p> Drama {{ drama }}, {% for show in showlist %} {{ show[1] }} {% endfor %} </p>
 {% endfor %}
 
 <p>Sincerely,</p>

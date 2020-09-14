@@ -59,7 +59,7 @@ class DramaChaser:
     def __parse_ifvod_page(page):
         try:
             match_obj = re.search('<app-media-list.*?>(.*?)</app-media-list>', page)
-            return re.findall(r'\"/play\?id=(.*?)\">.*?</a>', match_obj.group(1))
+            return re.findall(r'\"/play\?id=(.*?)\">(.*?)</a>', match_obj.group(1))
         except Exception as ex:
             logging.error(ex)
 
@@ -93,6 +93,11 @@ class DramaChaser:
         match_obj = re.search('<meta.*?name="title".*?content="(.*?) - IFVOD".*?/>', page)
         return match_obj.group(1)
 
+    @staticmethod
+    def __parse_resource_id(link):
+        match_obj = re.search('id=(.*?)">', link)
+        return match_obj.group(1)
+
     # key => drama_id
     # value => dict {
     #   last_updated_time:<last_updated_time>, 
@@ -122,7 +127,8 @@ class DramaChaser:
         for drama_id in drama_ids:
             updates = self.__get_drama_updates(drama_id)
             if len(updates) != 0:
-                reports[drama_id] = updates
+                drama_name = self.load_drama_name(drama_id)
+                reports[drama_name] = updates
         return reports
 
     def __notify_user_by_email(self, email, reports):
@@ -148,7 +154,6 @@ class DramaChaser:
                     pipe.sadd(DramaChaser.__get_all_users_key(), user_id) # all users mapping
                 else:
                     pipe.srem(user_id, drama_id)
-                    pipe.srem(DramaChaser.__get_all_users_key(), user_id)
                 pipe.execute()
                 break
             except redis.WatchError:
@@ -161,7 +166,8 @@ class DramaChaser:
         self.__update_drama(user_id, DRAMAOP.CHASE, drama_id)
     
     # abandon a drama from UI
-    def abandon(self, user_id, drama_id):
+    def abandon(self, user_id, drama_link):
+        drama_id = DramaChaser.__parse_resource_id(drama_link)
         self.__update_drama(user_id, DRAMAOP.ABANDON, drama_id)
 
     # complete drama information in cron job
@@ -178,7 +184,7 @@ class DramaChaser:
     def __transform_showlist_to_urls(show_list):
         if show_list is None:
             return None
-        return [DramaChaser.__get_play_url(show) for show in show_list]
+        return [(DramaChaser.__get_play_url(show[0]), show[1]) for show in show_list]
 
     @staticmethod
     def __get_show_list(drama_obj):

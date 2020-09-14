@@ -21,11 +21,15 @@
             {% for drama_id, metadata in drama_metadata.items() %}
             <tr>
                 <td><a href='{{ drama_id }}'>{{ metadata.drama_name }}</a></td>
+                {% if metadata.show_list %}
                 <td>
                     {% for show in metadata.show_list %}
-                    <a href='{{ show }}'>Play</a> 
+                    <a href='{{ show[0] }}'>{{show[1]}}</a>
                     {% endfor %}
                 </td>
+                {% else %}
+                <td></td>
+                {% endif %}
                 <td><button type="submit" class="btn abandonButton">Abandon</button></td>
             </tr>
             {% endfor %}
