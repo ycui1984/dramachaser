@@ -4,7 +4,7 @@ from wtforms.validators import ValidationError, DataRequired, Email, EqualTo, Le
 from core.models import User
 
 class DramaChasingForm(FlaskForm):
-    drama_id = StringField('Drama ID', validators=[DataRequired()])
+    drama_id = StringField('Drama ID', validators=[DataRequired()], description='https://www.ifvod.tv/detail?id={Drama ID}')
     submit = SubmitField('Chase')
 
 class LoginForm(FlaskForm):
